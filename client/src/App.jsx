@@ -5,6 +5,36 @@ function App() {
   const [todo, setTodo] = useState("");
   const [todos, setTodos] = useState([]);
 
+  //FOR EDITING
+  const [editing, setEditing] = useState(false);
+  const [editId, setEditId] = useState(null);
+
+  //handle edit button
+  const handleEdit = (items) => {
+    setTodo(items.todos);
+    setEditing(true);
+    setEditId(items.id);
+  };
+
+  //handle edit
+  const handleUpdateTodo = async () => {
+    if (todo.trim() === "") return alert("Please add todo");
+
+    try {
+      await axios.put(`http://localhost:4000/update/${editId}`, {
+        todo: todo,
+      });
+
+      alert("Update successfully!");
+      setTodo("");
+      setEditing(false);
+      setEditId(null);
+      fetchTodo();
+    } catch (error) {
+      console.error("Error in updating todo");
+    }
+  };
+
   const handleAddTodo = async () => {
     if (todo.trim() === "") return alert("Please add todo");
 
@@ -12,12 +42,12 @@ function App() {
       const response = await axios.post("http://localhost:4000/add", {
         todo: todo,
       });
-      alert(response.data.message);
       setTodo("");
       fetchTodo();
     } catch (error) {
       if (error.response && error.response.status === 409) {
         alert("Todo already exists!"); // Handle duplicate
+        setTodo("");
       }
       console.error("Error adding todo", error);
     }
@@ -36,6 +66,17 @@ function App() {
     fetchTodo();
   }, []);
 
+  const handleDelete = async (id) => {
+    try {
+      await axios.delete(`http://localhost:4000/delete/${id}`);
+      alert("Todo Deleted Sucessfully!");
+      setTodo("");
+      fetchTodo();
+    } catch (error) {
+      console.error("Error deleting todo", error);
+    }
+  };
+
   return (
     <div className="bg-amber-200 h-[100vh] flex items-center justify-center">
       <div className="bg-blue-400 rounded-3xl w-2xl">
@@ -44,16 +85,16 @@ function App() {
         <div className=" py-3 px-2 rounded-t-3xl">
           <input
             placeholder="Enter todo"
-            value={todo}
+            value={todo || ""}
             onChange={(e) => setTodo(e.target.value)}
             className="bg-white w-3/4 px-2 py-3 focus: outline-none"
             type="text"
           />
           <button
-            onClick={handleAddTodo}
+            onClick={editing ? handleUpdateTodo : handleAddTodo}
             className="bg-green-500 w-1/4 px-2 py-3 text-white cursor-pointer"
           >
-            Add
+            {editing ? "Update" : "Add"}
           </button>
         </div>
         {/* bottom div */}
@@ -64,10 +105,16 @@ function App() {
               <div key={items.id} className="bg-white flex mb-3">
                 <p className="w-3/4 py-3 px-2 ">{items.todos}</p>
                 <div className="w-1/4">
-                  <button className="py-3 px-2 bg-yellow-300 w-1/2 cursor-pointer">
+                  <button
+                    onClick={() => handleEdit(items)}
+                    className="py-3 px-2 bg-yellow-300 w-1/2 cursor-pointer"
+                  >
                     Edit
                   </button>
-                  <button className="py-3 px-2 bg-red-400 w-1/2 cursor-pointer">
+                  <button
+                    onClick={() => handleDelete(items.id)}
+                    className="py-3 px-2 bg-red-400 w-1/2 cursor-pointer"
+                  >
                     Delete
                   </button>
                 </div>
