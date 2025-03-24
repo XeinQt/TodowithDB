@@ -26,10 +26,35 @@ db.connect((err) => {
 //adding or inserting
 app.post("/add", (req, res) => {
   const { todo } = req.body;
-  const sql = "INSERT INTO todo (todos) VALUES (?)";
-  db.query(sql, [todo], (err, result) => {
+
+  const checkSql = "SELECT * FROM todo WHERE todos = ?";
+  db.query(checkSql, [todo], (err, result) => {
+    if (err) {
+      console.error("Database error:", err);
+      return res.status(500).json({ error: err.message || "Unknown DB error" });
+    }
+
+    if (result.length > 0) {
+      return res.status(409).json({ error: "Todo already exists!" }); // ← ✅ Corrected here
+    }
+
+    const insertSql = "INSERT INTO todo (todos) VALUES (?)";
+    db.query(insertSql, [todo], (err, result) => {
+      if (err) {
+        console.error("Insert error:", err);
+        return res.status(500).json({ error: err.message });
+      }
+      return res.status(201).json({ message: "Todo added!" });
+    });
+  });
+});
+
+//reading
+app.get("/todos", (req, res) => {
+  const sql = "SELECT id, todos FROM todo";
+  db.query(sql, (err, data) => {
     if (err) return res.status(500).json({ error: err.message });
-    res.status(201).json({ message: "Todo added!" });
+    res.json(data);
   });
 });
 

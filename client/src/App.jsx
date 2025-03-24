@@ -1,8 +1,9 @@
 import axios from "axios";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 function App() {
   const [todo, setTodo] = useState("");
+  const [todos, setTodos] = useState([]);
 
   const handleAddTodo = async () => {
     if (todo.trim() === "") return alert("Please add todo");
@@ -11,13 +12,29 @@ function App() {
       const response = await axios.post("http://localhost:4000/add", {
         todo: todo,
       });
-      console.log(response.data);
-      alert("Todo added!");
+      alert(response.data.message);
       setTodo("");
+      fetchTodo();
     } catch (error) {
+      if (error.response && error.response.status === 409) {
+        alert("Todo already exists!"); // Handle duplicate
+      }
       console.error("Error adding todo", error);
     }
   };
+
+  const fetchTodo = async () => {
+    try {
+      const res = await axios.get("http://localhost:4000/todos");
+      setTodos(res.data);
+    } catch (error) {
+      console.error("Failed to fetchTodo", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchTodo();
+  }, []);
 
   return (
     <div className="bg-amber-200 h-[100vh] flex items-center justify-center">
@@ -41,32 +58,22 @@ function App() {
         </div>
         {/* bottom div */}
         <div className="bg-red-300 py-5 px-2 rounded-b-3xl">
-          {/*1st todo list*/}
-          <div className="bg-white flex mb-3">
-            {" "}
-            <p className="w-3/4 py-3 px-2 ">Doign Home work</p>
-            <div className="w-1/4">
-              <button className="py-3 px-2 bg-yellow-300 w-1/2 cursor-pointer">
-                Edit
-              </button>
-              <button className="py-3 px-2 bg-red-400 w-1/2 cursor-pointer">
-                Delete
-              </button>
-            </div>
-          </div>
-          {/*wnd todo list*/}
-          <div className="bg-white flex ">
-            {" "}
-            <p className="w-3/4 py-3 px-2 ">Doign Home work</p>
-            <div className="w-1/4">
-              <button className="py-3 px-2 bg-yellow-300 w-1/2 cursor-pointer">
-                Edit
-              </button>
-              <button className="py-3 px-2 bg-red-400 w-1/2 cursor-pointer">
-                Delete
-              </button>
-            </div>
-          </div>
+          {/*reading in database*/}
+          {todos.map((items) => {
+            return (
+              <div key={items.id} className="bg-white flex mb-3">
+                <p className="w-3/4 py-3 px-2 ">{items.todos}</p>
+                <div className="w-1/4">
+                  <button className="py-3 px-2 bg-yellow-300 w-1/2 cursor-pointer">
+                    Edit
+                  </button>
+                  <button className="py-3 px-2 bg-red-400 w-1/2 cursor-pointer">
+                    Delete
+                  </button>
+                </div>
+              </div>
+            );
+          })}
           {/*End */}
         </div>
       </div>
