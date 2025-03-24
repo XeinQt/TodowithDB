@@ -1,4 +1,24 @@
+import axios from "axios";
+import { useState } from "react";
+
 function App() {
+  const [todo, setTodo] = useState("");
+
+  const handleAddTodo = async () => {
+    if (todo.trim() === "") return alert("Please add todo");
+
+    try {
+      const response = await axios.post("http://localhost:4000/add", {
+        todo: todo,
+      });
+      console.log(response.data);
+      alert("Todo added!");
+      setTodo("");
+    } catch (error) {
+      console.error("Error adding todo", error);
+    }
+  };
+
   return (
     <div className="bg-amber-200 h-[100vh] flex items-center justify-center">
       <div className="bg-blue-400 rounded-3xl w-2xl">
@@ -6,10 +26,16 @@ function App() {
         {/* top div */}
         <div className=" py-3 px-2 rounded-t-3xl">
           <input
+            placeholder="Enter todo"
+            value={todo}
+            onChange={(e) => setTodo(e.target.value)}
             className="bg-white w-3/4 px-2 py-3 focus: outline-none"
             type="text"
           />
-          <button className="bg-green-500 w-1/4 px-2 py-3 text-white cursor-pointer">
+          <button
+            onClick={handleAddTodo}
+            className="bg-green-500 w-1/4 px-2 py-3 text-white cursor-pointer"
+          >
             Add
           </button>
         </div>
